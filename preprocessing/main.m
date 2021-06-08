@@ -1,8 +1,7 @@
 % preprocess EEG data
 
 % Prerequisites:
-% 1. The CompPsyLab EEGLAB Toolbox (for the automatic rejection of ICA
-%    components).
+%  The CompPsyLab EEGLAB Toolbox 
 
 % This code is partly a modification of Aviv Dotan's work
 
@@ -12,114 +11,39 @@ clear all;
 close all;
 clc;
 
+%% Load parameters 
 
-%% Set paths and extentions
+params = get_params(); 
 
-% Input files
-inputs_path = 'raw_data';
-%channels_path = '\Miscellaneous\chanlocs32.sfp';
+%% Create paths 
 
-% Output path
-out_path = '..\Results';
-make_path(out_path)
-
-
-% Output files
-data_path = [out_path '\1.Preprocessed'];
-ica_path = [out_path '\2.ICA'];
-clean_path = [out_path '\3.Clean'];
-
-% Log files
-clean_log = '.\clean_log.txt';
-
-% Plots files
-%tmp_ps_file = '.\_tmp.ps';
-%pdf_file = '.\Aviv_SD_Results.pdf';
-
-% Extentions
-data_ext = 'mat';
-eeglab_ext = 'set';
-
-% Toolboxes 
-eeglab_path = 'C:\\Users\\Miriam\\Dropbox (BGU)\\Miriam Dissen Ben Or\\code\\toolboxes\\eeglab2021.0'; 
-
-
-%% parameters
-down_srate = 250;       % down sample rate for EEG
+params.paths = create_dirs(params.paths); 
 
 %% Start EEGLAB
 
-% add path?
+addpath(params.paths.eeglab); 
 eeglab nogui;
 
 %% Preprocess
 
-make_path(data_path);
-
-files = get_file_names(inputs_path);
+files = get_file_names(params.paths.raw_data);
 
 for f_num =  1 : length(files)
     
     fname = files{f_num};
     disp(fname);
+        
+    EEG = load_eeg(params, fname);
+    EEG = basic_clean(params, EEG);
+    EEG = run_ica(params, EEG); 
     
-    % load eeg file
-    eeg_type = strsplit(fname, '.');
-    eeg_type = eeg_type{end};
-    switch eeg_type
-        case 'cnt'
-            EEG = pop_loadcnt(fullfile(inputs_path, fname));
-        case 'edf'
-            EEG = pop_biosig(fullfile(inputs_path, fname));
-        otherwise
-            disp('please use eeglab to load your data');
-            eeglab
-    end
-    
-    %downsample data
-    if EEG.srate>300
-        EEG = pop_resample(EEG, down_srate);
-    end
-     EEG = eeg_checkset(EEG);
-
-    % Clean the electricity line frequency
-    EEG = pop_cleanline(EEG, ...
-        'linefreqs', [50, 100], ...
-        'computepower', 0, ...
-        'VerboseOutput',0);
-    EEG = eeg_checkset(EEG);
-
-    % Filter the data (between 1-40 Hz):
-    EEG = pop_eegfiltnew(EEG, 1, 40);
-    EEG = eeg_checkset(EEG);
-
-    % Rereference the data to average reference:
-    EEG = pop_reref(EEG, []);
-    EEG = eeg_checkset(EEG);
-    
-    % add locaion 
-    EEG = pop_chanedit(EEG, 'lookup', fullfile(eeglab_path, 'plugins\\dipfit\\standard_BESA\\standard-10-5-cap385.elp'));
-    EEG = eeg_checkset( EEG );
-
-    % remove bad channels & interpulate 
-    full_EEG = EEG; 
-    EEG = pop_clean_rawdata(EEG, 'FlatlineCriterion',5,'ChannelCriterion',0.8,'LineNoiseCriterion',4,'Highpass','off','BurstCriterion',20,'WindowCriterion',0.25,'BurstRejection','on','Distance','Euclidian','WindowCriterionTolerances',[-Inf 7] );
-    EEG = eeg_checkset( EEG );
-
-    EEG = pop_interp(EEG, full_EEG.chanlocs, 'spherical');
-    EEG = eeg_checkset( EEG );
-
-    pop_saveset(EEG, ...
-        'filename', fname, ...
-        'filepath', data_path);
 end
 
 
 %% ICA
 
-make_path(ica_path);
 
-files = get_file_names(data_path, eeglab_ext);
+files = get_file_names(pre_path, eeglab_ext);
 
 
 for f_num =  1 : length(files)
@@ -129,7 +53,7 @@ for f_num =  1 : length(files)
     % Load the data
     EEG = pop_loadset(...
         'filename', fname, ...
-        'filepath', data_path);
+        'filepath', pre_path);
     
     % ICA
     %{
