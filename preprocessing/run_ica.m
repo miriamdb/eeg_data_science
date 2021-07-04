@@ -1,6 +1,10 @@
-function EEG = run_ica(params, EEG) 
+function EEG = run_ica(params, EEG)
 
-     eeg_path = fullfile(params.paths.raw_data, fname);
+EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','off');
+EEG = eeg_checkset(EEG);
 
+pop_saveset(EEG, ...
+    'filename', EEG.setname, ...
+    'filepath', params.paths.ica_dir);
 
-end 
+end

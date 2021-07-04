@@ -32,14 +32,12 @@ EEG = pop_chanedit(EEG, 'lookup', fullfile(params.paths.eeglab , params.eeg.chan
 EEG = eeg_checkset( EEG );
 
 % remove bad channels & interpulate [ASR]
-EEG = pop_clean_rawdata(EEG, 'FlatlineCriterion',5,'ChannelCriterion',0.8,'LineNoiseCriterion',4,'Highpass','off','BurstCriterion',20,'WindowCriterion',0.25,'BurstRejection','on','Distance','Euclidian','WindowCriterionTolerances',[-Inf 7] );
-EEG = eeg_checkset( EEG );
-
+EEG = clean_rawdata(EEG, 5, [0.25 0.75], 0.8, 4, 5, 0.5);
 EEG = pop_interp(EEG, raw_EEG.chanlocs, 'spherical');
 EEG = eeg_checkset( EEG );
 
 pop_saveset(EEG, ...
-    'filename', fname, ...
+    'filename', EEG.setname, ...
     'filepath', params.paths.pre_dir);
 
 end

@@ -15,6 +15,12 @@ params.eeg.linefreqs = [50, 100];  % DC
 params.eeg.highpass = 1; 
 params.eeg.lowpass = 40; 
 params.eeg.chanlocs = 'plugins\\dipfit\\standard_BESA\\standard-10-5-cap385.elp';
+% parameters for ica 
+params.ica.max_rej = 7;        % Max number of components to reject
+params.ica.max_rej_ind = 12;   % Max component's index to reject
+
+
+
 
 % extentions
 params.ext.data = 'mat';
